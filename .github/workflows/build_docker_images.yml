@@ -12,27 +12,23 @@ jobs:
   build-and-push:
     runs-on: [self-hosted, label-1]
     steps:
-      - name: Checkout del código
+      - name: Checkout
         uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.inputs.branch }}
 
-      - name: Configurar Java/Maven
+      - name: Configure Java/Maven
         uses: actions/setup-java@v3
         with:
-          distribution: "corretto"
-          java-version: "18"
-          cache: "maven"
+          distribution: 'corretto'
+          java-version: '18'
+          cache: 'maven'
 
-      - name: Compilar con Maven
+      - name: Build JAR
         run: mvn -B package --file pom.xml
 
-      - name: Mostrar artefactos
-        run: |
-          echo "PWD: $(pwd)"
-          ls -l target/
+      - name: Listar target
+        run: ls -l target/
 
-      - name: Crear Dockerfile
+      - name: Prepare Dockerfile
         run: |
           cat > Dockerfile <<EOF
           FROM eclipse-temurin:18-jre
@@ -41,35 +37,20 @@ jobs:
           ENTRYPOINT ["java","-jar","/app/app.jar"]
           EOF
 
-      - name: Limpiar builders antiguos (opcional)
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+
+      - name: Log in to Docker Hub
         run: |
-          docker buildx rm buildx || echo "No hay builder existente"
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" \
+            | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Configurar Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          install: true
-          version: v0.11.2
-          driver: docker-container
-          driver-opts: |
-            image=moby/buildkit:latest  # Use a stable tag
-          buildkitd-config: |
-            [registry."docker.io"]
-              mirrors = ["mirror.url.here"]  # Optional registry mirror
+      - name: Build image
+        run: |
+          TAG=${{ github.event.inputs.branch }}
+          docker build -t mydockerhubuser/myapp:${TAG} .
 
-
-      - name: Login en Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Construir y subir imagen
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: mydockerhubuser/myapp:${{ github.event.inputs.branch }}
-          cache-from: type=registry,ref=mydockerhubuser/myapp:buildcache
-          cache-to: type=registry,ref=mydockerhubuser/myapp:buildcache,mode=max
-
+      - name: Push image
+        run: |
+          TAG=${{ github.event.inputs.branch }}
+          docker push mydockerhubuser/myapp:${TAG}
