@@ -11,6 +11,10 @@ on:
 jobs:
   build-and-push:
     runs-on: [self-hosted, label-1]
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -25,9 +29,6 @@ jobs:
       - name: Build JAR
         run: mvn -B package --file pom.xml
 
-      - name: Listar target
-        run: ls -l target/
-
       - name: Prepare Dockerfile
         run: |
           cat > Dockerfile <<EOF
@@ -39,18 +40,17 @@ jobs:
 
       - name: Set up Docker
         uses: docker/setup-docker-action@v4
+        with:
+          driver: docker-container
+          endpoint: tcp://docker:2375
 
       - name: Log in to Docker Hub
         run: |
           echo "${{ secrets.DOCKERHUB_TOKEN }}" \
             | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Build image
+      - name: Build and push
         run: |
           TAG=${{ github.event.inputs.branch }}
           docker build -t mydockerhubuser/myapp:${TAG} .
-
-      - name: Push image
-        run: |
-          TAG=${{ github.event.inputs.branch }}
           docker push mydockerhubuser/myapp:${TAG}
