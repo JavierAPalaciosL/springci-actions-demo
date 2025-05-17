@@ -41,16 +41,3 @@ jobs:
 
       - name: Set up Docker
         uses: docker/setup-docker-action@v4
-        with:
-          endpoint: tcp://docker:2375
-
-      - name: Log in to Docker Hub
-        run: |
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" \
-            | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-      - name: Build and push
-        run: |
-          TAG=${{ github.event.inputs.branch }}
-          docker build -t mydockerhubuser/myapp:${TAG} .
-          docker push mydockerhubuser/myapp:${TAG}
