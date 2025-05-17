@@ -66,10 +66,18 @@ jobs:
 
       - name: SendToServerLocal
         run: |
-          ssh lubuntu@192.168.1.75 << 'EOF'
-            docker pull javierpalacios8080/myapp:main
-            docker stop $(docker ps -q)
-            docker rm $(docker ps -a -q)
-            docker run -d --name container -p 8080:8080 -e CLIENT_ID=\$CLIENT_ID -e CLIENT_SECRET=\$CLIENT_SECRET -e REDIRECT_URI=\$REDIRECT_URI javierpalacios8080/myapp:main
-          EOF
+          ssh lubuntu@192.168.1.75 "\
+            CLIENT_ID=$CLIENT_ID \
+            CLIENT_SECRET=$CLIENT_SECRET \
+            REDIRECT_URI=$REDIRECT_URI \
+            docker pull javierpalacios8080/myapp:main && \
+            docker stop \$(docker ps -q) || true && \
+            docker rm \$(docker ps -a -q) || true && \
+            docker run -d --name container \
+              -p 8080:8080 \
+              -e CLIENT_ID=\$CLIENT_ID \
+              -e CLIENT_SECRET=\$CLIENT_SECRET \
+              -e REDIRECT_URI=\$REDIRECT_URI \
+              javierpalacios8080/myapp:main"
+
   
