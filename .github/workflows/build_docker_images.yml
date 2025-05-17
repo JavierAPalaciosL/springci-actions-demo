@@ -11,6 +11,7 @@ on:
 jobs:
   build-and-push:
     runs-on: [self-hosted, label-1]
+    container: docker:cli  # Contenedor con Docker CLI
     services:
       docker:
         image: docker:dind
@@ -41,7 +42,6 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-docker-action@v4
         with:
-          driver: docker-container
           endpoint: tcp://docker:2375
 
       - name: Log in to Docker Hub
