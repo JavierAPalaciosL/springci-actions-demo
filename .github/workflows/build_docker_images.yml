@@ -50,8 +50,8 @@ jobs:
         with:
           install: true
           driver: docker-container
-          driver-opts:
-            - image=moby/buildkit:master
+          driver-opts: |
+            image=moby/buildkit:master
 
       - name: Login en Docker Hub
         uses: docker/login-action@v2
@@ -65,3 +65,4 @@ jobs:
           context: .
           push: true
           tags: mydockerhubuser/myapp:${{ github.event.inputs.branch }}
+
