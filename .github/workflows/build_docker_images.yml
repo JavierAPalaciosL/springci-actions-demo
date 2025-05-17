@@ -1,24 +1,21 @@
-name: build_docker_images
+name: build_docker_images.yml
 
 on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "Elige una rama"
+        description: "Choose a branch"
         required: true
-        default: "main"
+        default: 'main'
 
 jobs:
   build-and-push:
     runs-on: [self-hosted, label-1]
-    container: docker:cli  # Contenedor con Docker CLI
-    services:
-      docker:
-        image: docker:dind
-        options: --privileged
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.branch }}
 
       - name: Configure Java/Maven
         uses: actions/setup-java@v3
@@ -27,17 +24,17 @@ jobs:
           java-version: '18'
           cache: 'maven'
 
-      - name: Build JAR
+      - name: Build with Maven
         run: mvn -B package --file pom.xml
 
-      - name: Prepare Dockerfile
+      - name: Listar contenido de target/
         run: |
-          cat > Dockerfile <<EOF
-          FROM eclipse-temurin:18-jre
-          COPY target/*.jar /app/app.jar
-          WORKDIR /app
-          ENTRYPOINT ["java","-jar","/app/app.jar"]
-          EOF
+          echo "PWD: $(pwd)"
+          ls -l target/
 
       - name: Set up Docker
         uses: docker/setup-docker-action@v4
+      
+        
+      
+      
