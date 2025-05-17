@@ -32,11 +32,21 @@ jobs:
           echo "PWD: $(pwd)"
           ls -l target/
 
-      - name: Set up Docker
-        uses: docker/setup-docker-action@v4
-        with:
-          version: 'latest'
-          
+      - name: Crear Dockerfile dinámicamente
+        run: |
+          cat > Dockerfile <<EOF
+          FROM eclipse-temurin:18-jre
+          COPY target/*.jar /app/app.jar
+          WORKDIR /app
+          ENTRYPOINT ["java","-jar","/app/app.jar"]
+          EOF
+
+      - name: Build Docker image
+        run: |
+          docker build -t my-app:${{ github.event.inputs.branch }} .
+
+      - name: Listar archivos
+        run: ls -l
+
         
-      
-      
+
