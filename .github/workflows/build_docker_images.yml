@@ -63,3 +63,13 @@ jobs:
           context: .
           push: true
           tags: javierpalacios8080/myapp:${{ github.event.inputs.branch }}
+
+      - name: SendToServerLocal
+        run: |
+          ssh lubuntu@192.168.1.75 << 'EOF'
+            sudo docker pull javierpalacios8080/myapp:main
+            sudo docker stop $(docker ps -q)
+            sudo docker rm $(docker ps -a -q)
+            sudo docker run -d --name container -p 8080:8080 -e CLIENT_ID=$CLIENT_ID -e CLIENT_SECRET=$CLIENT_SECRET -e REDIRECT_URI=$REDIRECT_URI javierpalacios8080/myapp:main
+          EOF
+  
