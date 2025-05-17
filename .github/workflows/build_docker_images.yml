@@ -62,4 +62,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: mydockerhubuser/myapp:${{ github.event.inputs.branch }}
+          tags: javierpalacios8080/myapp:${{ github.event.inputs.branch }}
