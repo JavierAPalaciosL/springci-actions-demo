@@ -1,0 +1,76 @@
+name: build_docker_images.yml
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Choose a branch"
+        required: true
+        default: 'main'
+
+jobs:
+  buildMyProjectAtDocker:
+    runs-on:
+      - self-hosted
+      - label-1
+    outputs:
+      jar-name: ${{ steps.upload.outputs.artifact-path }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Configure Java/Maven
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '18'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+
+      - name: Upload JAR artifact
+        id: upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: myapp-jar
+          path: target/*.jar
+
+  docker:
+    needs: buildMyProjectAtDocker
+    runs-on:
+      - self-hosted
+      - label-1
+    steps:
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: myapp-jar
+
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+
+      - name: Prepare Dockerfile
+        run: |
+          cat > Dockerfile <<EOF
+          FROM eclipse-temurin:18-jre
+          COPY *.jar /app/app.jar
+          WORKDIR /app
+          ENTRYPOINT ["java","-jar","/app/app.jar"]
+          EOF
+
+      - name: Build Docker image
+        run: |
+          TAG=${{ github.event.inputs.branch }} 
+          docker build -t mydockerhubuser/myapp:${TAG} .
+
+      - name: Log in to Docker Hub
+        if: secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Push Docker image
+        run: >
+          docker push mydockerhubuser/myapp:${{ github.event.inputs.branch }}
