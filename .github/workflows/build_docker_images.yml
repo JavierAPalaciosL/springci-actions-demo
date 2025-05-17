@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: [self-hosted, label-1]
+    runs-on: [self-hosted, label-2]
 
     env:
       CLIENT_ID: ${{ secrets.CLIENT_ID }}
