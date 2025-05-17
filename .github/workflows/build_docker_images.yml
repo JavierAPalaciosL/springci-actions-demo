@@ -31,52 +31,7 @@ jobs:
       - name: Build with Maven
         run: mvn -B package --file pom.xml
 
-      - name: Upload JAR artifact
-        id: upload
-        uses: actions/upload-artifact@v2
-        with:
-          name: myapp-jar
-          path: target/*.jar
-
-  docker:
-    needs: buildMyProjectAtDocker
-    runs-on:
-      - self-hosted
-      - label-1
-    steps:
-      - name: Download JAR artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: myapp-jar
-
-      - name: Set up Docker
-        uses: docker/setup-docker-action@v4
-
-      - name: Prepare Dockerfile
+      - name: listar target
         run: |
-          cat > Dockerfile <<EOF
-          FROM eclipse-temurin:18-jre
-          COPY *.jar /app/app.jar
-          WORKDIR /app
-          ENTRYPOINT ["java","-jar","/app/app.jar"]
-          EOF
-
-      - name: Build Docker image
-        run: |
-          TAG=${{ github.event.inputs.branch }} 
-          docker build -t mydockerhubuser/myapp:${TAG} .
-
-      - name: Log in to Docker Hub
-        run: |
-          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" \
-              | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-          else
-            echo "⚠️ Skipping Docker login: DOCKERHUB_USERNAME or DOCKERHUB_TOKEN not set"
-          fi
-
-      - name: Push Docker image
-        run: |
-          TAG=${{ github.event.inputs.branch }}
-          docker push mydockerhubuser/myapp:${TAG}
-
+          echo "PWD: $(pwd)"
+          ls -l target/
