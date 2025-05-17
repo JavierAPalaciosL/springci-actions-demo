@@ -78,9 +78,9 @@ jobs:
             docker rm   $(docker ps -a -q) || true
             docker run -d --name container \
               -p 8080:8080 \
-              -e CLIENT_ID=$CLIENT_ID \
-              -e CLIENT_SECRET=$CLIENT_SECRET \
-              -e REDIRECT_URI=$REDIRECT_URI \
+              -e CLIENT_ID='${CLIENT_ID}' \
+              -e CLIENT_SECRET='${CLIENT_SECRET}' \
+              -e REDIRECT_URI='${REDIRECT_URI}' \
               javierpalacios8080/myapp:main
           EOF
 
